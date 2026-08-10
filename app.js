@@ -19,11 +19,17 @@ app.use(cors({
 }))
 
 
+import authRoutes from './routes/authRoutes.js';
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Import routes
+app.use('/auth', authRoutes);
+
+
 
 const PORT = process.env.PORT;
 
