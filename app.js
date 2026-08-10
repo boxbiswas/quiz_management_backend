@@ -20,7 +20,10 @@ app.use(cors({
 
 
 import authRoutes from './routes/authRoutes.js';
-
+import adminRoutes from './routes/adminRoutes.js';
+import quizRoutes from './routes/quizRoutes.js';
+import categoryRoutes from './routes/categoryRoutes.js';
+import questionRoutes from './routes/questionRoutes.js';
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -28,7 +31,13 @@ app.use(cookieParser());
 
 // Import routes
 app.use('/auth', authRoutes);
+app.use('/admin', adminRoutes);
+app.use('/quizzes', quizRoutes);
+app.use('/categories', categoryRoutes);
 
+// For nested routes
+app.use('/quizzes/:quizId/questions', questionRoutes); 
+app.use('/questions', questionRoutes);
 
 
 const PORT = process.env.PORT;

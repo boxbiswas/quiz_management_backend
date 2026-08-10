@@ -35,8 +35,6 @@ export const getQuizById = async (req, res) => {
             include: {
                 category: { select: { id: true, name: true } },
                 questions: {
-                    // We will expand on questions in Day 6. 
-                    // For students taking the quiz, we won't return isCorrect here.
                     select: {
                         id: true,
                         questionText: true,
