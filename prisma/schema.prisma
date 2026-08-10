@@ -10,3 +10,144 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// --- ENUMS ---
+// Enforcing strict roles and statuses from the beginning
+
+enum Role {
+  ADMIN
+  STUDENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum QuizStatus {
+  DRAFT
+  PUBLISHED
+  UNPUBLISHED
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  COMPLETED
+  PASSED
+  FAILED
+}
+
+// --- MODELS ---
+model User {
+  id        Int        @id @default(autoincrement())
+  name      String
+  email     String     @unique
+  password  String
+  role      Role       @default(STUDENT)
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  attempts Attempt[]
+
+  @@map("users")
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  quizzes Quiz[]
+
+  @@map("categories")
+}
+
+model Quiz {
+  id           Int        @id @default(autoincrement())
+  title        String
+  description  String?
+  categoryId   Int        @map("category_id")
+  difficulty   Difficulty
+  duration     Int // Time in minutes
+  passingScore Float      @map("passing_score") // e.g., 60.0
+  maxAttempts  Int        @map("max_attempts")
+  status       QuizStatus @default(DRAFT)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  category  Category   @relation(fields: [categoryId], references: [id])
+  questions Question[]
+  attempts  Attempt[]
+
+  @@map("quizzes")
+}
+
+model Question {
+  id           Int        @id @default(autoincrement())
+  quizId       Int        @map("quiz_id")
+  questionText String     @map("question_text")
+  marks        Int // Points awarded for this question
+  explanation  String?
+  difficulty   Difficulty
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  quiz    Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  options Option[]
+  answers Answer[]
+
+  @@map("questions")
+}
+
+model Option {
+  id         Int     @id @default(autoincrement())
+  questionId Int     @map("question_id")
+  optionText String  @map("option_text")
+  isCorrect  Boolean @default(false) @map("is_correct")
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answers  Answer[] // To track if this option was selected in any attempt
+
+  @@map("options")
+}
+
+model Attempt {
+  id               Int           @id @default(autoincrement())
+  quizId           Int           @map("quiz_id")
+  userId           Int           @map("user_id")
+  score            Float? // Made optional so it can be updated on completion
+  percentage       Float?
+  correctAnswers   Int?          @map("correct_answers")
+  incorrectAnswers Int?          @map("incorrect_answers")
+  unanswered       Int?
+  timeTaken        Int?          @map("time_taken") // Usually tracked in seconds
+  status           AttemptStatus @default(IN_PROGRESS)
+  startedAt        DateTime      @default(now()) @map("started_at")
+  completedAt      DateTime?     @map("completed_at")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz    Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  answers Answer[]
+
+  @@map("attempts")
+}
+
+model Answer {
+  id               Int      @id @default(autoincrement())
+  attemptId        Int      @map("attempt_id")
+  questionId       Int      @map("question_id")
+  selectedOptionId Int?     @map("selected_option_id") // Nullable if the student leaves it unanswered
+  isCorrect        Boolean? @map("is_correct")
+
+  attempt        Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question       Question @relation(fields: [questionId], references: [id])
+  selectedOption Option?  @relation(fields: [selectedOptionId], references: [id])
+
+  @@map("answers")
+}
