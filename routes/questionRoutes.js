@@ -1,6 +1,6 @@
 import express from 'express';
-import { authenticate } from '../middleware/authMiddleware.js';
-import { isAdmin } from '../middleware/roleMiddleware.js';
+import { authenticate } from '../middlewares/authMiddleware.js';
+import { isAdmin } from '../middlewares/roleMiddleware.js';
 import { getQuestionsByQuiz, createQuestion, updateQuestion, deleteQuestion } from '../controllers/questionController.js';
 
 const router = express.Router({ mergeParams: true }); // mergeParams is important if mounted under quiz routes

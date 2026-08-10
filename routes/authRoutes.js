@@ -9,4 +9,4 @@ router.post('/logoutUser', logoutUser);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 
-module.exports = router;
+export default router;

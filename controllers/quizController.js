@@ -1,10 +1,28 @@
 import { prisma } from '../lib/prisma.js';
 
-// GET /quizzes
+// GET /quizzes?search=js&category=1&difficulty=EASY
 // Admin sees all. Student sees only PUBLISHED.
 export const getQuizzes = async (req, res) => {
     try {
+        const { search, category, difficulty } = req.query;
+
+        // Base condition: Students only see PUBLISHED, Admins see all
         const whereClause = req.user.role === 'STUDENT' ? { status: 'PUBLISHED' } : {};
+
+        // Search by title
+        if (search) {
+            whereClause.title = { contains: search, mode: 'insensitive' };
+        }
+
+        // Filter by category ID
+        if (category) {
+            whereClause.categoryId = parseInt(category);
+        }
+
+        // Filter by difficulty
+        if (difficulty) {
+            whereClause.difficulty = difficulty;
+        }
 
         const quizzes = await prisma.quiz.findMany({
             where: whereClause,

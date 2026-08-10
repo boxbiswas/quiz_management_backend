@@ -1,6 +1,6 @@
 import express from 'express';
-import { authenticate } from '../middleware/authMiddleware.js';
-import { isAdmin } from '../middleware/roleMiddleware.js';
+import { authenticate } from '../middlewares/authMiddleware.js';
+import { isAdmin } from '../middlewares/roleMiddleware.js';
 import { getDashboardStats } from '../controllers/dashboardController.js';
 import { getUsers, getUserById, updateUser, updateUserStatus, deleteUser } from '../controllers/userController.js';
 
