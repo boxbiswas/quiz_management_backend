@@ -296,3 +296,26 @@ export const submitQuiz = async (req, res) => {
         res.status(500).json({ message: 'Error submitting quiz.' });
     }
 };
+
+
+// GET /admin/attempts (ADMIN ONLY - Global Platform Attempts)
+export const getAllAttempts = async (req, res) => {
+    try {
+        const attempts = await prisma.attempt.findMany({
+            include: {
+                user: { 
+                    select: { name: true, email: true } // Include student details
+                },
+                quiz: { 
+                    select: { title: true, category: { select: { name: true } } } 
+                }
+            },
+            orderBy: { startedAt: 'desc' }
+        });
+
+        res.status(200).json(attempts);
+    } catch (error) {
+        console.error("GET ALL ATTEMPTS ERROR:", error);
+        res.status(500).json({ message: 'Error fetching platform attempts.' });
+    }
+};

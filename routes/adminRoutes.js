@@ -4,6 +4,7 @@ import { isAdmin } from '../middlewares/roleMiddleware.js';
 import { getDashboardStats } from '../controllers/dashboardController.js';
 import { getPlatformAnalytics } from '../controllers/analyticsController.js';
 import { getUsers, getUserById, updateUser, updateUserStatus, deleteUser } from '../controllers/userController.js';
+import { getAllAttempts } from '../controllers/attemptController.js';
 
 const router = express.Router();
 
@@ -15,6 +16,9 @@ router.get('/dashboard/stats', getDashboardStats);
 
 // Analytics / Charts
 router.get('/analytics', getPlatformAnalytics);
+
+// Platform Attempts
+router.get('/attempts', getAllAttempts);
 
 // User Management
 router.get('/users', getUsers);

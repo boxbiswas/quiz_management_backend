@@ -26,6 +26,7 @@ import categoryRoutes from './routes/categoryRoutes.js';
 import questionRoutes from './routes/questionRoutes.js';
 import attemptRoutes from './routes/attemptRoutes.js';
 import studentRoutes from './routes/studentRoutes.js';
+import leaderboardRoutes from './routes/leaderboardRoutes.js';
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -38,6 +39,7 @@ app.use('/quizzes', quizRoutes);
 app.use('/categories', categoryRoutes);
 app.use('/attempts', attemptRoutes);
 app.use('/student', studentRoutes);
+app.use('/leaderboard', leaderboardRoutes);
 
 // For nested routes
 app.use('/quizzes/:quizId/questions', questionRoutes);
