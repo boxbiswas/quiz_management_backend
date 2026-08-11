@@ -100,7 +100,16 @@ export const getAttemptById = async (req, res) => {
             where: { id: attemptId },
             include: {
                 quiz: { select: { title: true, duration: true, passingScore: true } },
-                answers: { include: { question: true, selectedOption: true } } // For Day 9 Review
+                answers: {
+                    include: {
+                        question: {
+                            include: {
+                                options: true // We need all options to show what was correct vs selected
+                            }
+                        },
+                        selectedOption: true
+                    }
+                }
             }
         });
 
@@ -113,9 +122,51 @@ export const getAttemptById = async (req, res) => {
             return res.status(403).json({ message: 'Unauthorized to view this attempt.' });
         }
 
-        res.status(200).json(attempt);
+        // Ensure the attempt is finished. If it's IN_PROGRESS, they shouldn't see answers yet.
+        if (attempt.status === 'IN_PROGRESS') {
+            return res.status(403).json({ message: 'Cannot review an attempt that is still in progress.' });
+        }
+
+        // Structure the data perfectly for the frontend Answer Review loop
+        const formattedReview = attempt.answers.map(ans => {
+            const correctOption = ans.question.options.find(opt => opt.isCorrect === true);
+
+            return {
+                questionId: ans.question.id,
+                questionText: ans.question.questionText,
+                explanation: ans.question.explanation,
+                marks: ans.question.marks,
+                options: ans.question.options.map(opt => ({
+                    id: opt.id,
+                    optionText: opt.optionText,
+                    isCorrect: opt.isCorrect // Safe to send now because the quiz is over
+                })),
+                selectedOptionId: ans.selectedOptionId,
+                isCorrect: ans.isCorrect,
+                correctOptionId: correctOption ? correctOption.id : null
+            };
+        });
+
+        // Send a clean, separated response object
+        res.status(200).json({
+            attemptDetails: {
+                id: attempt.id,
+                score: attempt.score,
+                percentage: attempt.percentage,
+                correctAnswers: attempt.correctAnswers,
+                incorrectAnswers: attempt.incorrectAnswers,
+                unanswered: attempt.unanswered,
+                timeTaken: attempt.timeTaken,
+                status: attempt.status,
+                startedAt: attempt.startedAt,
+                completedAt: attempt.completedAt,
+                quiz: attempt.quiz
+            },
+            review: formattedReview
+        });
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching attempt details.' });
+        console.error("GET ATTEMPT ERROR:", error);
+        res.status(500).send("Error fetching attempt details.");
     }
 };
 
