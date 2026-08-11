@@ -38,11 +38,11 @@ app.use('/categories', categoryRoutes);
 app.use('/attempts', attemptRoutes);
 
 // For nested routes
-app.use('/quizzes/:quizId/questions', questionRoutes); 
+app.use('/quizzes/:quizId/questions', questionRoutes);
 app.use('/questions', questionRoutes);
 
 // Mount the start quiz route specifically on the quizzes path
-app.use('/quizzes/:quizId/start', attemptRoutes);
+app.use('/quizzes/:quizId', attemptRoutes);
 
 
 const PORT = process.env.PORT;

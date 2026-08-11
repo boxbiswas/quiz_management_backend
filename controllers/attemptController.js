@@ -118,3 +118,130 @@ export const getAttemptById = async (req, res) => {
         res.status(500).json({ message: 'Error fetching attempt details.' });
     }
 };
+
+
+// POST /quizzes/:quizId/submit
+export const submitQuiz = async (req, res) => {
+    try {
+        const quizId = parseInt(req.params.quizId);
+        const userId = req.user.id;
+        const { answers } = req.body; // Expected format: [{ questionId: 1, selectedOptionId: 4 }, ...]
+
+        // 1. Fetch the active IN_PROGRESS attempt
+        const attempt = await prisma.attempt.findFirst({
+            where: { quizId, userId, status: 'IN_PROGRESS' }
+        });
+
+        if (!attempt) {
+            return res.status(400).json({ message: 'No active attempt found for this quiz. It may have already been submitted.' });
+        }
+
+        // 2. Fetch the Quiz with its Questions and their Options (including the correct ones)
+        const quiz = await prisma.quiz.findUnique({
+            where: { id: quizId },
+            include: {
+                questions: {
+                    include: { options: true }
+                }
+            }
+        });
+
+        if (!quiz) {
+            return res.status(404).json({ message: 'Quiz not found.' });
+        }
+
+        // 3. Time Validation[cite: 1]
+        const now = new Date();
+        const startedAt = attempt.startedAt;
+        const durationMs = quiz.duration * 60000;
+        const expiryTime = new Date(startedAt.getTime() + durationMs);
+
+        // Calculate time taken in seconds
+        let timeTaken = Math.floor((now.getTime() - startedAt.getTime()) / 1000);
+
+        // If the request comes in late (e.g., due to network delay after an auto-submit), 
+        // cap the time taken to the maximum duration of the quiz.
+        if (now > expiryTime) {
+            timeTaken = quiz.duration * 60;
+        }
+
+        // 4. Scoring Algorithm
+        let correctCount = 0;
+        let incorrectCount = 0;
+        let unansweredCount = 0;
+        let obtainedMarks = 0;
+        let totalMarks = 0;
+
+        const answerRecords = [];
+
+        quiz.questions.forEach(question => {
+            totalMarks += question.marks;
+
+            // Find the student's submitted answer for this specific question
+            const studentAnswer = answers ? answers.find(a => a.questionId === question.id) : null;
+            const correctOption = question.options.find(o => o.isCorrect === true);
+
+            let isCorrect = false;
+            let selectedOptionId = null;
+
+            if (!studentAnswer || !studentAnswer.selectedOptionId) {
+                unansweredCount++;
+            } else {
+                selectedOptionId = parseInt(studentAnswer.selectedOptionId);
+                if (correctOption && selectedOptionId === correctOption.id) {
+                    isCorrect = true;
+                    correctCount++;
+                    obtainedMarks += question.marks;
+                } else {
+                    incorrectCount++;
+                }
+            }
+
+            // Prepare record for the Answer table
+            answerRecords.push({
+                attemptId: attempt.id,
+                questionId: question.id,
+                selectedOptionId: selectedOptionId,
+                isCorrect: selectedOptionId ? isCorrect : null
+            });
+        });
+
+        // Calculate final percentage and pass/fail status
+        const percentage = totalMarks > 0 ? (obtainedMarks / totalMarks) * 100 : 0;
+        const status = percentage >= quiz.passingScore ? 'PASSED' : 'FAILED';
+
+        // 5. Database Transaction: Save answers and update the attempt simultaneously
+        const finalResult = await prisma.$transaction(async (tx) => {
+            // Bulk insert all answers
+            await tx.answer.createMany({
+                data: answerRecords
+            });
+
+            // Update the attempt with final metrics
+            const updatedAttempt = await tx.attempt.update({
+                where: { id: attempt.id },
+                data: {
+                    score: obtainedMarks,
+                    percentage: Number(percentage.toFixed(2)),
+                    correctAnswers: correctCount,
+                    incorrectAnswers: incorrectCount,
+                    unanswered: unansweredCount,
+                    timeTaken: timeTaken,
+                    status: status,
+                    completedAt: now
+                }
+            });
+
+            return updatedAttempt;
+        });
+
+        res.status(200).json({
+            message: 'Quiz submitted successfully.',
+            result: finalResult
+        });
+
+    } catch (error) {
+        console.error("SUBMIT QUIZ ERROR:", error);
+        res.status(500).json({ message: 'Error submitting quiz.' });
+    }
+};
