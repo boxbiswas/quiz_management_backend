@@ -2,6 +2,7 @@ import express from 'express';
 import { authenticate } from '../middlewares/authMiddleware.js';
 import { isAdmin } from '../middlewares/roleMiddleware.js';
 import { getDashboardStats } from '../controllers/dashboardController.js';
+import { getPlatformAnalytics } from '../controllers/analyticsController.js';
 import { getUsers, getUserById, updateUser, updateUserStatus, deleteUser } from '../controllers/userController.js';
 
 const router = express.Router();
@@ -11,6 +12,9 @@ router.use(authenticate, isAdmin);
 
 // Dashboard
 router.get('/dashboard/stats', getDashboardStats);
+
+// Analytics / Charts
+router.get('/analytics', getPlatformAnalytics);
 
 // User Management
 router.get('/users', getUsers);
