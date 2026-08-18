@@ -3,10 +3,10 @@ const router = express.Router();
 import { registerUser, loginUser, logoutUser, forgotPassword, resetPassword } from '../controllers/authController.js';
 
 
-router.post('/registerUser', registerUser);
-router.post('/loginUser', loginUser);
-router.post('/logoutUser', logoutUser);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
+router.post('/register', registerUser);
+router.post('/login', loginUser);
+router.post('/logout', logoutUser);
+router.post('/forgotPassword', forgotPassword);
+router.post('/resetPassword', resetPassword);
 
 export default router;
