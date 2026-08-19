@@ -12,7 +12,7 @@ const app = express();
 app.use(cors({
     origin: [
         "http://localhost:5173",
-        "https://quiz-management-frontend-gamma.vercel.app/"
+        "https://quiz-management-frontend-gamma.vercel.app"
     ],
     credentials: true, // This allows the cookies to be sent back and forth
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
