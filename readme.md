@@ -282,10 +282,10 @@ The project uses Prisma with PostgreSQL and a compact, quiz-focused schema.
 Create a `.env` file in the backend root:
 
 ```env
-PORT=3000
-DATABASE_URL=postgresql://username:password@host:5432/database?sslmode=require
+PORT=your_port
+DATABASE_URL=your_db_url
 JWT_SECRET=your_super_secret_key
-JWT_EXPIRES_IN=1d
+JWT_EXPIRES_IN=your_jwt_expiry_time
 ```
 
 ### Notes
